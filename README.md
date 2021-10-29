@@ -1,27 +1,43 @@
 
 ## Салимов Наиль 11-802
 
-### Задание 1
+### Задание 2
 
-Чтобы запустить приложение, нужно создать конфигурационный файл ~/.osf/config.yaml, содержащий:
+#### Облачная функция
 
-```yaml
-osf_access_key_id: key
-osf_secret_access_key: secret
-osf_bucket: bucket
-```
+Код облочной функции лежит в в файле cloud_function.py. Для работы, нужно добавить следующие переменные окружения:
 
-Команды запуска cloudphoto.py:
-- python cloudphoto.py upload -p path -a album
-- python cloudphoto.py download -p path -a album
-- python cloudphoto.py list
-- python cloudphoto.py list -a album
-
-Требуемые зависимости(установить через pip):
-- os
-- boto3
-- logging
-- argparse
-- yaml
+- FACE_SECRET_KEY (секретный ключ от анализотора фото Face++)
+- FACE_ACCESS_KEY (ключ доступа от анализотора фото Face++)
+- S3_SECRET_KEY   (секретный ключ от аккаунта Yandex Cloud, где находится Object Storage)
+- S3_ACCESS_KEY   (ключ доступа от аккаунта Yandex Cloud, где находится Object Storage)
+- SQS_SECRET_KEY  (секретный ключ от аккаунта Yandex Cloud, где находится Message Queue)
+- SQS_ACCESS_KEY  (ключ доступа от аккаунта Yandex Cloud, где находится Message Queue)
+- SQS_QUEUE       (Имя очереди)
 
 
+#### Хранилище
+
+Хранилище должно публичным для:
+
+- Доступа на чтение объектов
+- Доступа к списку объектов
+
+Доступ на чтение настроек: ограниченный. 
+
+Класс хранилища: стандартный. 
+
+
+#### Триггер
+
+- Тип: Object Storage.
+- Запускаемый ресурс: Функция
+- Бакет: (имя хранилища)
+- Тип события: создание
+- Функция: (имя функции)
+- Сервисный аккаунт: (свой сервисный аккаунт)
+
+#### Очередь
+
+- Имя: (имя, которое будет указано в SQS_QUEUE)
+- Тип: Стандартная
