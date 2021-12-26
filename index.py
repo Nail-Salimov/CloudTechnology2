@@ -18,15 +18,15 @@ def handler(event, context):
     SQS_QUEUE = os.environ['SQS_QUEUE']
 
     if data['event_metadata']['event_type'] == 'yandex.cloud.events.storage.ObjectCreate':
-        
+
         bucket_id = data['details']['bucket_id']
         object_id = data['details']['object_id']
-        
+
         if len(object_id.split('/')) != 2:
             return {
                 'statusCode': 200,
             }
-        
+
         s3 = boto3.resource(service_name='s3', endpoint_url='https://storage.yandexcloud.net',
                             aws_access_key_id=S3_ACCESS_KEY, aws_secret_access_key=S3_SECRET_KEY)
 
@@ -36,17 +36,15 @@ def handler(event, context):
         i = 0
         directory = object_id.rsplit('.', 1)[0]
         extension = object_id.split('.')[-1]
-        new_object_id_list = []
+
+        sqs = boto3.resource(service_name='sqs', endpoint_url='https://message-queue.api.cloud.yandex.net', region_name='ru-central1',
+                            aws_access_key_id=SQS_ACCESS_KEY, aws_secret_access_key=SQS_SECRET_KEY)
 
         for face in faceList:
             new_object_id = directory + "/" + str(i) + "." + extension
             uploadObjectLikeFile(s3, bucket_id, new_object_id, face)
-            new_object_id_list.append(new_object_id)
             i+=1
-
-        sqs = boto3.resource(service_name='sqs', endpoint_url='https://message-queue.api.cloud.yandex.net', region_name='ru-central1',
-                            aws_access_key_id=SQS_ACCESS_KEY, aws_secret_access_key=SQS_SECRET_KEY)
-        send_message_to_queue(sqs, SQS_QUEUE, json.dumps(new_object_id_list))
+            send_message_to_queue(sqs, SQS_QUEUE, json.dumps(new_object_id))
 
     return {
         'statusCode': 200,
@@ -75,11 +73,11 @@ def findFaces(bytes):
     }
     r = requests.post(face_detect_url, params, files=files)
     response = json.loads(r.text)
-    
+
     result = []
     for a in response['faces']:
         result.append(cropImage(bytes, a['face_rectangle']))
-    
+
     return result
 
 
@@ -99,4 +97,4 @@ def image_to_byte_array(image: Image):
 
 def send_message_to_queue(sqs, queue_name, json_message):
     queue = sqs.get_queue_by_name(QueueName=queue_name)
-    response = queue.send_message(MessageBody=json_message) 
+    response = queue.send_message(MessageBody=json_message)
